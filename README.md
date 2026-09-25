@@ -14,7 +14,7 @@ One player runs the mod. Their client reads guild chat the game already shows an
 
 `[reply]` puts `/gc message` in the chat box. You press Enter yourself. Nothing is sent until you do that.
 
-The webhook URL is compiled into [`BridgeSecrets.kt`](src/main/kotlin/dev/anikh/guildbridge/BridgeSecrets.kt). A webhook can only send, so reading Discord needs a bot token in the config file described below.
+The webhook URL is compiled into [`BridgeSecrets.kt`](src/main/kotlin/dev/anikh/guildbridge/BridgeSecrets.kt). A webhook can only send, so reading Discord needs a bot token. Save it in game with `/guildbridge token`.
 
 ## Hypixel
 
@@ -46,25 +46,52 @@ Put the jar in `.minecraft/mods`.
 
 ## Discord to game
 
-1. Open the [Discord Developer Portal](https://discord.com/developers/applications) and create an application.
-2. Open Bot, reset the token, and copy it. Enable Message Content Intent.
-3. Invite the bot to your server with the Read Message History and View Channel permissions, into the same channel as the webhook.
-4. Launch Minecraft once so the mod can create `config/guildbridge.json`.
-5. Set `botToken` to that token. `channelId` and `guildId` are already filled in. Save the file and run `/guildbridge reload`.
+Guild chat posts to Discord with no extra setup. The other direction needs a Discord bot, because a webhook cannot read messages. The channel `1553130909270671401` and guild `1323913838143209622` are already compiled in.
 
-`config/guildbridge.json`:
+### Create the bot
+
+1. Open the [Discord Developer Portal](https://discord.com/developers/applications) and click **New Application**.
+2. Open **Bot**, click **Reset Token**, and copy the token. Turn on **Message Content Intent**.
+3. Copy the **Application ID** from **General Information**.
+4. Invite the bot into the guild. Replace `APPLICATION_ID` in this link:
+
+```
+https://discord.com/oauth2/authorize?client_id=APPLICATION_ID&permissions=66560&scope=bot&guild_id=1323913838143209622&disable_guild_select=true
+```
+
+Those permissions are View Channel and Read Message History. After it joins, confirm it can see the guild-bridge channel.
+
+### Save the token in game
+
+Join a world and run:
+
+```
+/guildbridge token YOUR_BOT_TOKEN
+```
+
+The command stays on your client. It is not sent to Hypixel. The mod writes the token into `config/guildbridge.json` in that instance’s Minecraft folder (for the official launcher, `%appdata%\.minecraft\config\guildbridge.json`) and starts reading the channel.
+
+Check it without printing the token:
+
+```
+/guildbridge token
+```
+
+That replies either that no token is saved, or that one is already saved. Run `/guildbridge token` with a new token to replace it. `/guildbridge` also reports whether Discord reading is active.
+
+The saved file looks like this. `botToken` is filled in by the command. Leave the ids alone.
 
 ```json
 {
   "enabled": true,
-  "botToken": "",
+  "botToken": "saved-by-the-command",
   "channelId": "1553130909270671401",
   "guildId": "1323913838143209622",
   "pollSeconds": 3
 }
 ```
 
-The bot token stays in that local file. Do not commit it.
+Do not commit that file. If the token leaks, reset it on the Bot page and run `/guildbridge token` again with the new one. The token is also stored in your local Minecraft chat history, so don’t share screenshots of the command.
 
 On join, the mod marks the newest Discord message as already seen, so old history is not dumped into chat. Posts made by the webhook are skipped, so guild chat does not bounce back into the game as a Discord message.
 
@@ -74,10 +101,12 @@ These are client commands. They stay on your computer and are not sent to Hypixe
 
 | Command | Effect |
 | --- | --- |
-| `/guildbridge` | Shows whether the relay is on, and whether Discord reading is configured |
+| `/guildbridge` | Shows whether the relay is on, and whether a bot token is saved |
 | `/guildbridge on` | Starts relaying |
 | `/guildbridge off` | Stops relaying |
 | `/guildbridge reload` | Rereads `config/guildbridge.json` |
+| `/guildbridge token` | Says whether a bot token is saved, without showing it |
+| `/guildbridge token <token>` | Saves the Discord bot token and starts reading the guild channel |
 
 ## Build
 

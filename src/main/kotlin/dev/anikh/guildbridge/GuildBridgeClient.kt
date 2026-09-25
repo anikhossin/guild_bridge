@@ -6,6 +6,8 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommands
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents
+import com.mojang.brigadier.arguments.StringArgumentType
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.network.chat.Component
 
@@ -59,6 +61,24 @@ object GuildBridgeClient : ClientModInitializer {
                             context.source.sendFeedback(Component.literal("Guild Bridge config reloaded."))
                             1
                         },
+                    )
+                    .then(
+                        ClientCommands.literal("token")
+                            .executes { context ->
+                                val message = if (BridgeRuntime.config.botToken.isEmpty()) {
+                                    "No bot token yet. Run /guildbridge token <token>."
+                                } else {
+                                    "A bot token is already saved. Run /guildbridge token <token> to replace it."
+                                }
+                                context.source.sendFeedback(Component.literal(message))
+                                1
+                            }
+                            .then(
+                                ClientCommands.argument("token", StringArgumentType.word())
+                                    .executes { context ->
+                                        saveToken(context.source, StringArgumentType.getString(context, "token"))
+                                    },
+                            ),
                     ),
             )
         }
@@ -68,7 +88,20 @@ object GuildBridgeClient : ClientModInitializer {
         logger.info("Guild Bridge ready for guild chat relay")
     }
 
-    private fun setEnabled(source: net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource, value: Boolean): Int {
+    private fun saveToken(source: FabricClientCommandSource, token: String): Int {
+        val trimmed = token.trim()
+        if (trimmed.isEmpty()) {
+            source.sendError(Component.literal("That token is empty."))
+            return 0
+        }
+        BridgeRuntime.config.botToken = trimmed
+        BridgeConfig.save(BridgeRuntime.configPath, BridgeRuntime.config)
+        DiscordInbox.recheck()
+        source.sendFeedback(Component.literal("Bot token saved. Discord messages from the guild channel will show in chat."))
+        return 1
+    }
+
+    private fun setEnabled(source: FabricClientCommandSource, value: Boolean): Int {
         BridgeRuntime.enabled = value
         BridgeRuntime.config.enabled = value
         BridgeConfig.save(BridgeRuntime.configPath, BridgeRuntime.config)
@@ -79,7 +112,7 @@ object GuildBridgeClient : ClientModInitializer {
     private fun statusText(): Component {
         val config = BridgeRuntime.config
         val inbox = if (config.botToken.isEmpty()) {
-            "Discord to game is waiting for a bot token in config/guildbridge.json"
+            "Discord to game is waiting for /guildbridge token <token>"
         } else {
             "Discord to game is reading channel ${config.channelId} in guild ${config.guildId}"
         }
