@@ -18,6 +18,7 @@ object DiscordInbox {
     private var lastId: String? = null
     private var missingTokenLogged = false
     private var channelProblem = ""
+    private var contentWarned = false
 
     fun start() {
         Thread({
@@ -78,11 +79,14 @@ object DiscordInbox {
             channelChecked.set(true)
         }
         if (!primed.get()) {
-            lastId = fetch(token, config.channelId, after = null).maxByOrNull { it.id.toULongOrNull() ?: 0uL }?.id
+            val newest = fetch(token, config.channelId, after = null)
+            lastId = newest.maxByOrNull { it.id.toULongOrNull() ?: 0uL }?.id
+            warnIfContentHidden(newest)
             primed.set(true)
         } else {
             val fresh = fetch(token, config.channelId, after = lastId)
                 .sortedBy { it.id.toULongOrNull() ?: 0uL }
+            warnIfContentHidden(fresh)
             for (message in fresh) {
                 lastId = message.id
                 if (message.webhookId != null || message.text.isEmpty()) {
@@ -118,6 +122,15 @@ object DiscordInbox {
         }
         channelProblem = ""
         return true
+    }
+
+    private fun warnIfContentHidden(messages: List<Incoming>) {
+        val hidden = messages.any { it.webhookId == null && it.text.isEmpty() }
+        if (!hidden || contentWarned) {
+            return
+        }
+        contentWarned = true
+        LocalChat.showStatus("Discord is hiding message text. In the Developer Portal, open your bot, turn on Message Content Intent, save, then send a new Discord message.")
     }
 
     private fun reportChannelProblem(problem: String) {

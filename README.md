@@ -47,7 +47,7 @@ Guild chat posts to Discord with no extra setup. The other direction needs a Dis
 ### Create the bot
 
 1. Open the [Discord Developer Portal](https://discord.com/developers/applications) and click **New Application**.
-2. Open **Bot**, click **Reset Token**, and copy the token. Turn on **Message Content Intent**.
+2. Open **Bot**, click **Reset Token**, and copy the token. Under **Privileged Gateway Intents**, turn on **Message Content Intent** and save. Send Messages and View Channel are not enough. Without that intent, Discord gives the mod blank messages and nothing is sent to Hypixel. The bot also needs Read Message History.
 3. Copy the **Application ID** from **General Information**.
 4. Invite the bot into the guild. Replace `APPLICATION_ID` in this link:
 
