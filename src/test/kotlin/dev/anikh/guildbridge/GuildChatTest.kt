@@ -25,6 +25,14 @@ class GuildChatTest {
     }
 
     @Test
+    fun parsesColoredAndBracketedGuildChat() {
+        val colored = GuildChat.parse("§2Guild > §b[MVP+] Steve§f: §7hello")
+        assertEquals(GuildLine("Steve", "hello"), colored)
+        val bracketed = GuildChat.parse("[Guild] Alex: hi")
+        assertEquals(GuildLine("Alex", "hi"), bracketed)
+    }
+
+    @Test
     fun ignoresJoinLeaveAndOtherChats() {
         assertNull(GuildChat.parse("Guild > Steve joined."))
         assertNull(GuildChat.parse("Party > [MVP+] Steve: hi"))

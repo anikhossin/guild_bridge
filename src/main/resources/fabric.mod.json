@@ -5,7 +5,7 @@
   "name": "Guild Bridge",
   "description": "Sends Hypixel guild chat to Discord with each player's name and skin head, and shows Discord replies in your local chat.",
   "authors": [
-    "anikhossin"
+    "asbron"
   ],
   "contact": {
     "sources": "https://github.com/anikhossin/guild_bridge"

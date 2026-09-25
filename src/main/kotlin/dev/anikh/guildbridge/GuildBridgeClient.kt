@@ -27,11 +27,13 @@ object GuildBridgeClient : ClientModInitializer {
         BridgeRuntime.enabled = BridgeRuntime.config.enabled
 
         ClientReceiveMessageEvents.GAME.register { message, overlay ->
-            if (overlay || !BridgeRuntime.enabled) {
+            if (overlay) {
                 return@register
             }
-            val line = GuildChat.parse(message.string) ?: return@register
-            WebhookPoster.enqueue(line)
+            relayGuildLine(message.string)
+        }
+        ClientReceiveMessageEvents.CHAT.register { message, _, _, _, _ ->
+            relayGuildLine(message.string)
         }
 
         ClientTickEvents.END_CLIENT_TICK.register { client ->
@@ -85,7 +87,16 @@ object GuildBridgeClient : ClientModInitializer {
 
         WebhookPoster.start()
         DiscordInbox.start()
+        GuildSender.start()
         logger.info("Guild Bridge ready for guild chat relay")
+    }
+
+    private fun relayGuildLine(text: String) {
+        if (!BridgeRuntime.enabled) {
+            return
+        }
+        val line = GuildChat.parse(text) ?: return
+        WebhookPoster.enqueue(line)
     }
 
     private fun saveToken(source: FabricClientCommandSource, token: String): Int {
@@ -97,7 +108,7 @@ object GuildBridgeClient : ClientModInitializer {
         BridgeRuntime.config.botToken = trimmed
         BridgeConfig.save(BridgeRuntime.configPath, BridgeRuntime.config)
         DiscordInbox.recheck()
-        source.sendFeedback(Component.literal("Bot token saved. Discord messages from the guild channel will show in chat."))
+        source.sendFeedback(Component.literal("Bot token saved. Discord messages will be sent to Hypixel guild chat."))
         return 1
     }
 
@@ -112,9 +123,9 @@ object GuildBridgeClient : ClientModInitializer {
     private fun statusText(): Component {
         val config = BridgeRuntime.config
         val inbox = if (config.botToken.isEmpty()) {
-            "Discord to game is waiting for /guildbridge token <token>"
+            "Discord to Hypixel is waiting for /guildbridge token <token>"
         } else {
-            "Discord to game is reading channel ${config.channelId} in guild ${config.guildId}"
+            "Discord to Hypixel sends /gc from channel ${config.channelId}"
         }
         val relay = if (BridgeRuntime.enabled) "on" else "off"
         return Component.literal("Guild Bridge is $relay. Game to Discord uses the built-in webhook. $inbox")

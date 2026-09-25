@@ -58,6 +58,7 @@ object WebhookPoster {
         val request = HttpRequest.newBuilder(URI.create(BridgeSecrets.WEBHOOK_URL))
             .timeout(Duration.ofSeconds(15))
             .header("Content-Type", "application/json")
+            .header("User-Agent", "GuildBridge (https://github.com/anikhossin/guild_bridge, 1.0)")
             .POST(HttpRequest.BodyPublishers.ofString(GuildChat.webhookPayload(line)))
             .build()
         val response = http.send(request, HttpResponse.BodyHandlers.ofString())
@@ -75,7 +76,10 @@ object WebhookPoster {
                     post(line, retries - 1)
                 }
             }
-            else -> logger.warn("Guild Bridge webhook returned HTTP {}", response.statusCode())
+            else -> {
+                logger.warn("Guild Bridge webhook returned HTTP {}", response.statusCode())
+                LocalChat.showStatus("Discord rejected a guild message (HTTP ${response.statusCode()}).")
+            }
         }
     }
 }

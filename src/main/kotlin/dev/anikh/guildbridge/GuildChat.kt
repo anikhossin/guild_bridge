@@ -9,24 +9,26 @@ data class GuildLine(
 )
 
 object GuildChat {
-    private val nameToken = Regex("^[A-Za-z0-9_]{1,16}$")
+    private val nameToken = Regex("^[A-Za-z0-9_]{3,16}$")
     private val userMention = Regex("<@!?\\d+>")
     private val roleMention = Regex("<@&\\d+>")
     private val channelMention = Regex("<#\\d+>")
 
     fun parse(line: String): GuildLine? {
-        val trimmed = line.trim()
-        if (!trimmed.startsWith("Guild > ")) {
-            return null
-        }
-        val body = trimmed.removePrefix("Guild > ")
+        val plain = line
+            .replace(Regex("§."), "")
+            .replace('\u00A0', ' ')
+            .replace(Regex("\\s+"), " ")
+            .trim()
+        val marker = listOf("Guild > ", "[Guild] ").firstOrNull { plain.contains(it) } ?: return null
+        val body = plain.substring(plain.indexOf(marker) + marker.length)
         val separator = body.indexOf(": ")
         if (separator <= 0) {
             return null
         }
         val username = body.substring(0, separator)
             .split(' ')
-            .lastOrNull { nameToken.matches(it) }
+            .lastOrNull { it.matches(nameToken) }
             ?: return null
         val message = body.substring(separator + 2).trim()
         if (message.isEmpty()) {

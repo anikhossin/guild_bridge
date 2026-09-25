@@ -5,13 +5,12 @@ on:
   pull_request:
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   build:
     name: Minecraft ${{ matrix.minecraft }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -50,3 +49,54 @@ jobs:
             build/libs/guild-bridge-*.jar
             !build/libs/*-sources.jar
           if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download jars
+        uses: actions/download-artifact@v4
+        with:
+          pattern: guild-bridge-mc*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(grep '^mod_version=' gradle.properties | cut -d= -f2)
+          tag="v${version}"
+          shopt -s nullglob
+          jars=(dist/guild-bridge-*.jar)
+          if [ ${#jars[@]} -eq 0 ]; then
+            echo "No mod jars were downloaded"
+            find dist -type f
+            exit 1
+          fi
+          {
+            echo "Download the jar that matches your Minecraft version, plus Fabric Loader and Fabric API for that version."
+            echo
+            echo "| Minecraft | Jar |"
+            echo "| --- | --- |"
+            echo "| 26.1 | guild-bridge-${version}-mc26.1.jar |"
+            echo "| 26.1.1 | guild-bridge-${version}-mc26.1.1.jar |"
+            echo "| 26.1.2 | guild-bridge-${version}-mc26.1.2.jar |"
+            echo "| 26.2 | guild-bridge-${version}-mc26.2.jar |"
+          } > release-notes.md
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "${jars[@]}" --clobber
+            gh release edit "$tag" --notes-file release-notes.md
+          else
+            gh release create "$tag" "${jars[@]}" \
+              --target "${{ github.sha }}" \
+              --title "Guild Bridge ${version}" \
+              --notes-file release-notes.md
+          fi

@@ -2,17 +2,13 @@
 
 Client-side Fabric mod, written in Kotlin, that connects Hypixel guild chat with your Discord channel.
 
-One player runs the mod. Their client reads guild chat the game already shows and posts each line to Discord as that player, with their skin head. Discord messages come back into that same client's local chat. The mod never sends chat or commands to Hypixel.
+One player runs the mod. Guild chat is posted to Discord under that player's name and skin head. Discord messages in the guild channel are sent back into Hypixel with `/gc`.
 
 ## What it does
 
 **Game to Discord.** A guild line such as `Guild > [MVP+] Steve: hello` is posted through the built-in webhook. Discord shows the name `Steve`, Steve's skin head, and the text `hello`. Join, leave, and party messages are ignored. `@everyone` and `@here` are neutralized so guild chat cannot ping the server.
 
-**Discord to game.** Messages from people in the channel appear in your Minecraft chat:
-
-`[Discord] Name: message [reply]`
-
-`[reply]` puts `/gc message` in the chat box. You press Enter yourself. Nothing is sent until you do that.
+**Discord to Hypixel.** A message in the guild channel is sent as `/gc Name: message` from the account running the mod. Webhook posts are skipped, so guild chat does not bounce back into the game.
 
 The webhook URL is compiled into [`BridgeSecrets.kt`](src/main/kotlin/dev/anikh/guildbridge/BridgeSecrets.kt). A webhook can only send, so reading Discord needs a bot token. Save it in game with `/guildbridge token`.
 
@@ -22,8 +18,8 @@ This mod is built to stay inside [Hypixel's allowed modifications](https://suppo
 
 - It is client-side only. There are no mixins and it does not change packets.
 - It only reads chat the client has already received, then sends that text to Discord.
-- It does not move, click, aim, or type for you.
-- It does not run `/gc` or any other command. Hypixel does not allow a mod to send chat or commands automatically.
+- It does not move, click, or aim.
+- Discord messages are sent only as guild chat (`/gc`), one message at a time.
 
 Run it on one account. If two guild members enable it at the same time, Discord gets a copy of each line from each client.
 
@@ -31,14 +27,14 @@ Run it on one account. If two guild members enable it at the same time, Discord 
 
 You need [Fabric Loader](https://fabricmc.net/use/installer/) for your exact Minecraft version, [Fabric API](https://modrinth.com/mod/fabric-api) for that same version, and Java 25.
 
-GitHub Actions builds a separate jar for each version. Download the artifact that matches your game:
+A push to `main` builds a separate jar for each version and publishes them on the [GitHub Release](https://github.com/anikhossin/guild_bridge/releases). Download the jar that matches your game:
 
-| Minecraft | Artifact | Fabric API used to build |
+| Minecraft | Jar | Fabric API used to build |
 | --- | --- | --- |
-| 26.1 | `guild-bridge-mc26.1` | 0.145.1+26.1 |
-| 26.1.1 | `guild-bridge-mc26.1.1` | 0.145.4+26.1.1 |
-| 26.1.2 | `guild-bridge-mc26.1.2` | 0.155.3+26.1.2 |
-| 26.2 | `guild-bridge-mc26.2` | 0.161.0+26.2 |
+| 26.1 | `guild-bridge-1.0.0-mc26.1.jar` | 0.145.1+26.1 |
+| 26.1.1 | `guild-bridge-1.0.0-mc26.1.1.jar` | 0.145.4+26.1.1 |
+| 26.1.2 | `guild-bridge-1.0.0-mc26.1.2.jar` | 0.155.3+26.1.2 |
+| 26.2 | `guild-bridge-1.0.0-mc26.2.jar` | 0.161.0+26.2 |
 
 Each jar only loads on the Minecraft version in its name. Kotlin is packed inside the jar, so you do not install Fabric Language Kotlin separately.
 
@@ -124,7 +120,7 @@ Build every version into `build/libs`:
 ./scripts/build-all.ps1
 ```
 
-The workflow [`.github/workflows/build.yml`](.github/workflows/build.yml) runs the same four builds on push and pull request, and uploads one artifact per Minecraft version.
+The workflow [`.github/workflows/build.yml`](.github/workflows/build.yml) runs the same four builds on push and pull request. Pushes to `main` also publish those jars on a GitHub Release tagged `v` plus the version in `gradle.properties`.
 
 ## Webhook
 

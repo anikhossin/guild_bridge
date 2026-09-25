@@ -88,7 +88,7 @@ object DiscordInbox {
                 if (message.webhookId != null || message.text.isEmpty()) {
                     continue
                 }
-                LocalChat.showDiscord(message.author, message.text)
+                GuildSender.enqueue(message.author, message.text)
             }
         }
         Thread.sleep(config.pollSeconds * 1000L)
