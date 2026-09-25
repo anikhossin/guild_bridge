@@ -8,7 +8,7 @@ One player runs the mod. Guild chat is posted to Discord under that player's nam
 
 **Game to Discord.** A guild line such as `Guild > [MVP+] Steve: hello` is posted through the built-in webhook. Discord shows the name `Steve`, Steve's skin head, and the text `hello`. Join, leave, and party messages are ignored. `@everyone` and `@here` are neutralized so guild chat cannot ping the server.
 
-**Discord to Hypixel.** A message in the guild channel appears only for you, in the same style as a Hypixel whisper: `From Name: message`. It is not sent with `/gc`, so the rest of the guild does not see it. Webhook posts are skipped, so guild chat does not bounce back into the game.
+**Discord to Hypixel.** A message in the guild channel appears only for you as `[Guild Bridge] username -> message`, in gold, aqua, and yellow so it does not look like normal chat. It is not sent with `/gc`. Webhook posts are skipped, so guild chat does not bounce back into the game.
 
 The webhook URL is compiled into [`BridgeSecrets.kt`](src/main/kotlin/dev/anikh/guildbridge/BridgeSecrets.kt). A webhook can only send, so reading Discord needs a bot token. Save it in game with `/guildbridge token`.
 
@@ -31,10 +31,10 @@ A push to `main` builds a separate jar for each version and publishes them on th
 
 | Minecraft | Jar | Fabric API used to build |
 | --- | --- | --- |
-| 26.1 | `guild-bridge-1.0.0-mc26.1.jar` | 0.145.1+26.1 |
-| 26.1.1 | `guild-bridge-1.0.0-mc26.1.1.jar` | 0.145.4+26.1.1 |
-| 26.1.2 | `guild-bridge-1.0.0-mc26.1.2.jar` | 0.155.3+26.1.2 |
-| 26.2 | `guild-bridge-1.0.0-mc26.2.jar` | 0.161.0+26.2 |
+| 26.1 | `guild-bridge-1.1.0-mc26.1.jar` | 0.145.1+26.1 |
+| 26.1.1 | `guild-bridge-1.1.0-mc26.1.1.jar` | 0.145.4+26.1.1 |
+| 26.1.2 | `guild-bridge-1.1.0-mc26.1.2.jar` | 0.155.3+26.1.2 |
+| 26.2 | `guild-bridge-1.1.0-mc26.2.jar` | 0.161.0+26.2 |
 
 Each jar only loads on the Minecraft version in its name. Kotlin is packed inside the jar, so you do not install Fabric Language Kotlin separately.
 

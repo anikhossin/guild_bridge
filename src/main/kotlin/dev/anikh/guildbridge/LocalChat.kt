@@ -12,10 +12,12 @@ object LocalChat {
             return
         }
         val line = Component.empty()
-            .append(Component.literal("From ").withStyle(ChatFormatting.LIGHT_PURPLE))
-            .append(Component.literal(safeAuthor).withStyle(ChatFormatting.LIGHT_PURPLE))
-            .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
-            .append(Component.literal(safeText).withStyle(ChatFormatting.WHITE))
+            .append(Component.literal("[").withStyle(ChatFormatting.DARK_PURPLE))
+            .append(Component.literal("Guild Bridge").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD))
+            .append(Component.literal("] ").withStyle(ChatFormatting.DARK_PURPLE))
+            .append(Component.literal(safeAuthor).withStyle(ChatFormatting.AQUA))
+            .append(Component.literal(" -> ").withStyle(ChatFormatting.LIGHT_PURPLE))
+            .append(Component.literal(safeText).withStyle(ChatFormatting.YELLOW))
         show(line)
     }
 
