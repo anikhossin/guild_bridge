@@ -2,13 +2,13 @@
 
 Client-side Fabric mod, written in Kotlin, that connects Hypixel guild chat with your Discord channel.
 
-One player runs the mod. Guild chat is posted to Discord under that player's name and skin head. Discord messages in the guild channel are sent back into Hypixel with `/gc`.
+One player runs the mod. Guild chat is posted to Discord under that player's name and skin head. Discord messages come back only as a private message on that client.
 
 ## What it does
 
 **Game to Discord.** A guild line such as `Guild > [MVP+] Steve: hello` is posted through the built-in webhook. Discord shows the name `Steve`, Steve's skin head, and the text `hello`. Join, leave, and party messages are ignored. `@everyone` and `@here` are neutralized so guild chat cannot ping the server.
 
-**Discord to Hypixel.** A message in the guild channel is sent as `/gc Name: message` from the account running the mod. Webhook posts are skipped, so guild chat does not bounce back into the game.
+**Discord to Hypixel.** A message in the guild channel appears only for you, in the same style as a Hypixel whisper: `From Name: message`. It is not sent with `/gc`, so the rest of the guild does not see it. Webhook posts are skipped, so guild chat does not bounce back into the game.
 
 The webhook URL is compiled into [`BridgeSecrets.kt`](src/main/kotlin/dev/anikh/guildbridge/BridgeSecrets.kt). A webhook can only send, so reading Discord needs a bot token. Save it in game with `/guildbridge token`.
 
@@ -19,7 +19,7 @@ This mod is built to stay inside [Hypixel's allowed modifications](https://suppo
 - It is client-side only. There are no mixins and it does not change packets.
 - It only reads chat the client has already received, then sends that text to Discord.
 - It does not move, click, or aim.
-- Discord messages are sent only as guild chat (`/gc`), one message at a time.
+- Discord messages are shown only to you. The mod does not send them with `/gc` or any other chat command.
 
 Run it on one account. If two guild members enable it at the same time, Discord gets a copy of each line from each client.
 

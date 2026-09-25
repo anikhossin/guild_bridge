@@ -108,7 +108,7 @@ object GuildBridgeClient : ClientModInitializer {
         BridgeRuntime.config.botToken = trimmed
         BridgeConfig.save(BridgeRuntime.configPath, BridgeRuntime.config)
         DiscordInbox.recheck()
-        source.sendFeedback(Component.literal("Bot token saved. Discord messages will be sent to Hypixel guild chat."))
+        source.sendFeedback(Component.literal("Bot token saved. Discord messages will show as private messages."))
         return 1
     }
 
@@ -125,7 +125,7 @@ object GuildBridgeClient : ClientModInitializer {
         val inbox = if (config.botToken.isEmpty()) {
             "Discord to Hypixel is waiting for /guildbridge token <token>"
         } else {
-            "Discord to Hypixel sends /gc from channel ${config.channelId}"
+            "Discord to Hypixel shows private messages from channel ${config.channelId}"
         }
         val relay = if (BridgeRuntime.enabled) "on" else "off"
         return Component.literal("Guild Bridge is $relay. Game to Discord uses the built-in webhook. $inbox")
