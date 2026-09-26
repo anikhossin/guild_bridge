@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import kotlin.io.path.writeText
 
 class GuildChatTest {
     @Test
@@ -48,5 +49,31 @@ class GuildChatTest {
         assertTrue(payload.contains("@ everyone"))
         assertTrue(payload.contains("\"allowed_mentions\":{\"parse\":[]}"))
         assertTrue(!payload.contains("@everyone"))
+    }
+
+    @Test
+    fun acceptsADiscordWebhookAndDropsQueryText() {
+        val url = WebhookUrl.normalize(
+            "https://discord.com/api/webhooks/123456789012345678/abcDEF_123-token?wait=true",
+        )
+        assertEquals(
+            "https://discord.com/api/webhooks/123456789012345678/abcDEF_123-token",
+            url,
+        )
+        assertNull(WebhookUrl.normalize("https://example.com/api/webhooks/123456789012345678/abcDEF_123-token"))
+        assertNull(WebhookUrl.normalize(""))
+    }
+
+    @Test
+    fun olderConfigWithoutAWebhookStaysEmpty() {
+        val path = java.nio.file.Files.createTempDirectory("guildbridge").resolve("guildbridge.json")
+        path.writeText(
+            """
+            {"enabled":true,"botToken":"abc","channelId":"1","guildId":"2","pollSeconds":3}
+            """.trimIndent(),
+        )
+        val loaded = BridgeConfig.load(path)
+        assertEquals("", loaded.webhookUrl)
+        assertEquals("abc", loaded.botToken)
     }
 }

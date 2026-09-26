@@ -15,6 +15,7 @@ object WebhookPoster {
     private val http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build()
     private var lastKey = ""
     private var lastAt = 0L
+    private var missingWarned = false
 
     fun start() {
         Thread({
@@ -36,8 +37,19 @@ object WebhookPoster {
         }, "guild-bridge-webhook").apply { isDaemon = true }.start()
     }
 
+    fun noteConfigured() {
+        missingWarned = false
+    }
+
     fun enqueue(line: GuildLine) {
         if (!BridgeRuntime.enabled) {
+            return
+        }
+        if (WebhookUrl.normalize(BridgeRuntime.config.webhookUrl) == null) {
+            if (!missingWarned) {
+                missingWarned = true
+                LocalChat.showStatus("No webhook saved. Run /guildbridge webhook <url>.")
+            }
             return
         }
         val key = line.username + "\u0000" + line.message
@@ -55,7 +67,8 @@ object WebhookPoster {
     }
 
     private fun post(line: GuildLine, retries: Int) {
-        val request = HttpRequest.newBuilder(URI.create(BridgeSecrets.WEBHOOK_URL))
+        val webhook = WebhookUrl.normalize(BridgeRuntime.config.webhookUrl) ?: return
+        val request = HttpRequest.newBuilder(URI.create(webhook))
             .timeout(Duration.ofSeconds(15))
             .header("Content-Type", "application/json")
             .header("User-Agent", "GuildBridge (https://github.com/anikhossin/guild_bridge, 1.0)")

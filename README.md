@@ -6,11 +6,11 @@ One player runs the mod. Guild chat is posted to Discord under that player's nam
 
 ## What it does
 
-**Game to Discord.** A guild line such as `Guild > [MVP+] Steve: hello` is posted through the built-in webhook. Discord shows the name `Steve`, Steve's skin head, and the text `hello`. Join, leave, and party messages are ignored. `@everyone` and `@here` are neutralized so guild chat cannot ping the server.
+**Game to Discord.** A guild line such as `Guild > [MVP+] Steve: hello` is posted through the webhook you save with `/guildbridge webhook`. Discord shows the name `Steve`, Steve's skin head, and the text `hello`. Join, leave, and party messages are ignored. `@everyone` and `@here` are neutralized so guild chat cannot ping the server.
 
 **Discord to Hypixel.** A message in the guild channel appears only for you as `[Guild Bridge] username -> message`, in gold, aqua, and yellow so it does not look like normal chat. It is not sent with `/gc`. Webhook posts are skipped, so guild chat does not bounce back into the game.
 
-The webhook URL is compiled into [`BridgeSecrets.kt`](src/main/kotlin/dev/anikh/guildbridge/BridgeSecrets.kt). A webhook can only send, so reading Discord needs a bot token. Save it in game with `/guildbridge token`.
+The webhook is not in the jar. Save it once with `/guildbridge webhook`. That URL is stored in `config/guildbridge.json` and used for every guild message on that Minecraft instance. A webhook can only send, so reading Discord still needs a bot token. Save that with `/guildbridge token`.
 
 ## Hypixel
 
@@ -31,10 +31,10 @@ A push to `main` builds a separate jar for each version and publishes them on th
 
 | Minecraft | Jar | Fabric API used to build |
 | --- | --- | --- |
-| 26.1 | `guild-bridge-1.1.0-mc26.1.jar` | 0.145.1+26.1 |
-| 26.1.1 | `guild-bridge-1.1.0-mc26.1.1.jar` | 0.145.4+26.1.1 |
-| 26.1.2 | `guild-bridge-1.1.0-mc26.1.2.jar` | 0.155.3+26.1.2 |
-| 26.2 | `guild-bridge-1.1.0-mc26.2.jar` | 0.161.0+26.2 |
+| 26.1 | `guild-bridge-1.2.0-mc26.1.jar` | 0.145.1+26.1 |
+| 26.1.1 | `guild-bridge-1.2.0-mc26.1.1.jar` | 0.145.4+26.1.1 |
+| 26.1.2 | `guild-bridge-1.2.0-mc26.1.2.jar` | 0.155.3+26.1.2 |
+| 26.2 | `guild-bridge-1.2.0-mc26.2.jar` | 0.161.0+26.2 |
 
 Each jar only loads on the Minecraft version in its name. Kotlin is packed inside the jar, so you do not install Fabric Language Kotlin separately.
 
@@ -42,7 +42,23 @@ Put the jar in `.minecraft/mods`.
 
 ## Discord to game
 
-Guild chat posts to Discord with no extra setup. The other direction needs a Discord bot, because a webhook cannot read messages. The channel `1553130909270671401` and guild `1323913838143209622` are already compiled in.
+Guild chat posts to Discord after you save a webhook. The other direction needs a Discord bot, because a webhook cannot read messages. The channel `1553130909270671401` and guild `1323913838143209622` are already compiled in.
+
+### Save the webhook
+
+In the Discord channel, open **Edit Channel → Integrations → Webhooks**, create one, and copy its URL. Join a world and run:
+
+```
+/guildbridge webhook https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN
+```
+
+The command stays on your client. It is not sent to Hypixel. The URL is written into `config/guildbridge.json` and then used for all guild chat from that instance. Check it without printing the URL:
+
+```
+/guildbridge webhook
+```
+
+Run the command again with a new URL to replace it. Only `https://discord.com/api/webhooks/...` links are accepted.
 
 ### Create the bot
 
@@ -75,11 +91,12 @@ Check it without printing the token:
 
 That replies either that no token is saved, or that one is already saved. Run `/guildbridge token` with a new token to replace it. `/guildbridge` also reports whether Discord reading is active.
 
-The saved file looks like this. `botToken` is filled in by the command. Leave the ids alone.
+The saved file looks like this. `webhookUrl` and `botToken` are filled in by the commands. Leave the ids alone.
 
 ```json
 {
   "enabled": true,
+  "webhookUrl": "saved-by-the-command",
   "botToken": "saved-by-the-command",
   "channelId": "1553130909270671401",
   "guildId": "1323913838143209622",
@@ -87,7 +104,7 @@ The saved file looks like this. `botToken` is filled in by the command. Leave th
 }
 ```
 
-Do not commit that file. If the token leaks, reset it on the Bot page and run `/guildbridge token` again with the new one. The token is also stored in your local Minecraft chat history, so don’t share screenshots of the command.
+Do not commit that file. If the webhook leaks, delete it in the channel’s Integrations page and run `/guildbridge webhook` again with a new one. If the token leaks, reset it on the Bot page and run `/guildbridge token` again. Both values are also stored in your local Minecraft chat history, so don’t share screenshots of the commands.
 
 On join, the mod marks the newest Discord message as already seen, so old history is not dumped into chat. Posts made by the webhook are skipped, so guild chat does not bounce back into the game as a Discord message.
 
@@ -97,10 +114,12 @@ These are client commands. They stay on your computer and are not sent to Hypixe
 
 | Command | Effect |
 | --- | --- |
-| `/guildbridge` | Shows whether the relay is on, and whether a bot token is saved |
+| `/guildbridge` | Shows whether the relay is on, and whether a webhook and bot token are saved |
 | `/guildbridge on` | Starts relaying |
 | `/guildbridge off` | Stops relaying |
 | `/guildbridge reload` | Rereads `config/guildbridge.json` |
+| `/guildbridge webhook` | Says whether a webhook is saved, without showing it |
+| `/guildbridge webhook <url>` | Saves the Discord webhook for every guild message on this instance |
 | `/guildbridge token` | Says whether a bot token is saved, without showing it |
 | `/guildbridge token <token>` | Saves the Discord bot token and starts reading the guild channel |
 
@@ -124,4 +143,4 @@ The workflow [`.github/workflows/build.yml`](.github/workflows/build.yml) runs t
 
 ## Webhook
 
-The webhook is part of the source and of every built jar. Anyone who can read the repository or the jar can post in that Discord channel. If this repository is public, regenerate the webhook in Discord channel settings and replace `WEBHOOK_URL` in `BridgeSecrets.kt`.
+The webhook URL is only in `config/guildbridge.json` on the computer that ran `/guildbridge webhook`. It is not compiled into the source or the jar. Older releases did include a webhook. Delete that webhook in Discord and create a new one before saving it with the command.

@@ -65,6 +65,24 @@ object GuildBridgeClient : ClientModInitializer {
                         },
                     )
                     .then(
+                        ClientCommands.literal("webhook")
+                            .executes { context ->
+                                val message = if (WebhookUrl.normalize(BridgeRuntime.config.webhookUrl) == null) {
+                                    "No webhook yet. Run /guildbridge webhook <url>."
+                                } else {
+                                    "A webhook is already saved. Run /guildbridge webhook <url> to replace it."
+                                }
+                                context.source.sendFeedback(Component.literal(message))
+                                1
+                            }
+                            .then(
+                                ClientCommands.argument("url", StringArgumentType.word())
+                                    .executes { context ->
+                                        saveWebhook(context.source, StringArgumentType.getString(context, "url"))
+                                    },
+                            ),
+                    )
+                    .then(
                         ClientCommands.literal("token")
                             .executes { context ->
                                 val message = if (BridgeRuntime.config.botToken.isEmpty()) {
@@ -112,6 +130,19 @@ object GuildBridgeClient : ClientModInitializer {
         return 1
     }
 
+    private fun saveWebhook(source: FabricClientCommandSource, raw: String): Int {
+        val webhook = WebhookUrl.normalize(raw)
+        if (webhook == null) {
+            source.sendError(Component.literal("That is not a Discord webhook URL."))
+            return 0
+        }
+        BridgeRuntime.config.webhookUrl = webhook
+        BridgeConfig.save(BridgeRuntime.configPath, BridgeRuntime.config)
+        WebhookPoster.noteConfigured()
+        source.sendFeedback(Component.literal("Webhook saved. Guild chat will post to that Discord channel."))
+        return 1
+    }
+
     private fun setEnabled(source: FabricClientCommandSource, value: Boolean): Int {
         BridgeRuntime.enabled = value
         BridgeRuntime.config.enabled = value
@@ -122,12 +153,17 @@ object GuildBridgeClient : ClientModInitializer {
 
     private fun statusText(): Component {
         val config = BridgeRuntime.config
+        val outbound = if (WebhookUrl.normalize(config.webhookUrl) == null) {
+            "Game to Discord is waiting for /guildbridge webhook <url>"
+        } else {
+            "Game to Discord uses the saved webhook"
+        }
         val inbox = if (config.botToken.isEmpty()) {
             "Discord to Hypixel is waiting for /guildbridge token <token>"
         } else {
             "Discord to Hypixel shows private messages from channel ${config.channelId}"
         }
         val relay = if (BridgeRuntime.enabled) "on" else "off"
-        return Component.literal("Guild Bridge is $relay. Game to Discord uses the built-in webhook. $inbox")
+        return Component.literal("Guild Bridge is $relay. $outbound. $inbox")
     }
 }

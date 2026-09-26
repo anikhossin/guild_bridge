@@ -9,6 +9,7 @@ import kotlin.io.path.writeText
 
 class BridgeConfig {
     @JvmField var enabled: Boolean = true
+    @JvmField var webhookUrl: String = ""
     @JvmField var botToken: String = ""
     @JvmField var channelId: String = BridgeSecrets.CHANNEL_ID
     @JvmField var guildId: String = BridgeSecrets.GUILD_ID
@@ -16,12 +17,15 @@ class BridgeConfig {
 
     fun sanitized(): BridgeConfig {
         enabled = enabled
-        botToken = botToken.trim()
-        channelId = channelId.trim().ifEmpty { BridgeSecrets.CHANNEL_ID }
-        guildId = guildId.trim().ifEmpty { BridgeSecrets.GUILD_ID }
+        webhookUrl = present(webhookUrl)
+        botToken = present(botToken)
+        channelId = present(channelId).ifEmpty { BridgeSecrets.CHANNEL_ID }
+        guildId = present(guildId).ifEmpty { BridgeSecrets.GUILD_ID }
         pollSeconds = pollSeconds.coerceIn(2, 30)
         return this
     }
+
+    private fun present(value: String?): String = value?.trim().orEmpty()
 
     companion object {
         private val gson = GsonBuilder().setPrettyPrinting().create()
