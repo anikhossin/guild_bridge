@@ -31,10 +31,10 @@ A push to `main` builds a separate jar for each version and publishes them on th
 
 | Minecraft | Jar | Fabric API used to build |
 | --- | --- | --- |
-| 26.1 | `guild-bridge-1.2.0-mc26.1.jar` | 0.145.1+26.1 |
-| 26.1.1 | `guild-bridge-1.2.0-mc26.1.1.jar` | 0.145.4+26.1.1 |
-| 26.1.2 | `guild-bridge-1.2.0-mc26.1.2.jar` | 0.155.3+26.1.2 |
-| 26.2 | `guild-bridge-1.2.0-mc26.2.jar` | 0.161.0+26.2 |
+| 26.1 | `guild-bridge-1.2.1-mc26.1.jar` | 0.145.1+26.1 |
+| 26.1.1 | `guild-bridge-1.2.1-mc26.1.1.jar` | 0.145.4+26.1.1 |
+| 26.1.2 | `guild-bridge-1.2.1-mc26.1.2.jar` | 0.155.3+26.1.2 |
+| 26.2 | `guild-bridge-1.2.1-mc26.2.jar` | 0.161.0+26.2 |
 
 Each jar only loads on the Minecraft version in its name. Kotlin is packed inside the jar, so you do not install Fabric Language Kotlin separately.
 

@@ -6,7 +6,14 @@ object WebhookUrl {
     )
 
     fun normalize(raw: String): String? {
-        val cleaned = raw.trim().substringBefore('?').trimEnd('/')
+        var cleaned = raw.trim()
+        if (cleaned.length >= 2 &&
+            ((cleaned.startsWith("\"") && cleaned.endsWith("\"")) ||
+                (cleaned.startsWith("<") && cleaned.endsWith(">")))
+        ) {
+            cleaned = cleaned.substring(1, cleaned.length - 1).trim()
+        }
+        cleaned = cleaned.substringBefore('?').trimEnd('/')
         return cleaned.takeIf { discordWebhook.matches(it) }
     }
 }

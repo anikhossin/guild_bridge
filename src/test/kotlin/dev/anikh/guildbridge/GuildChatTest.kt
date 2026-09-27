@@ -62,6 +62,10 @@ class GuildChatTest {
         )
         assertNull(WebhookUrl.normalize("https://example.com/api/webhooks/123456789012345678/abcDEF_123-token"))
         assertNull(WebhookUrl.normalize(""))
+        assertEquals(
+            "https://discord.com/api/webhooks/123456789012345678/abcDEF_123-token",
+            WebhookUrl.normalize("<https://discord.com/api/webhooks/123456789012345678/abcDEF_123-token>"),
+        )
     }
 
     @Test

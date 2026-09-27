@@ -76,7 +76,7 @@ object GuildBridgeClient : ClientModInitializer {
                                 1
                             }
                             .then(
-                                ClientCommands.argument("url", StringArgumentType.word())
+                                ClientCommands.argument("url", StringArgumentType.greedyString())
                                     .executes { context ->
                                         saveWebhook(context.source, StringArgumentType.getString(context, "url"))
                                     },
