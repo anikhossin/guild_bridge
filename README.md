@@ -23,7 +23,7 @@ This mod is built to stay inside [Hypixel's allowed modifications](https://suppo
 - It does not move, click, or aim.
 - Discord messages are shown only to you. The mod does not send them with `/gc` or any other chat command.
 
-Run it on one account. If two guild members enable it at the same time, Discord gets a copy of each line from each client.
+If **several guild members** run the mod, keep the default **relay own** (`relayOwnGuildMessages: true`): each client posts only lines where they are the speaker, so Discord gets one copy per message. If **one person** bridges the whole guild and others do not use the mod, run `/guildbridge relay all` on that single client.
 
 ## Install
 
@@ -33,10 +33,10 @@ A push to `main` builds a separate jar for each version and publishes them on th
 
 | Minecraft | Jar | Fabric API used to build |
 | --- | --- | --- |
-| 26.1 | `guild-bridge-1.3-mc26.1.jar` | 0.145.1+26.1 |
-| 26.1.1 | `guild-bridge-1.3-mc26.1.1.jar` | 0.145.4+26.1.1 |
-| 26.1.2 | `guild-bridge-1.3-mc26.1.2.jar` | 0.155.3+26.1.2 |
-| 26.2 | `guild-bridge-1.3-mc26.2.jar` | 0.161.0+26.2 |
+| 26.1 | `guild-bridge-1.3.1-mc26.1.jar` | 0.145.1+26.1 |
+| 26.1.1 | `guild-bridge-1.3.1-mc26.1.1.jar` | 0.145.4+26.1.1 |
+| 26.1.2 | `guild-bridge-1.3.1-mc26.1.2.jar` | 0.155.3+26.1.2 |
+| 26.2 | `guild-bridge-1.3.1-mc26.2.jar` | 0.161.0+26.2 |
 
 Each jar only loads on the Minecraft version in its name. Kotlin is packed inside the jar, so you do not install Fabric Language Kotlin separately.
 
@@ -103,7 +103,8 @@ The saved file looks like this. `webhookUrl` and `botToken` are filled in by the
   "channelId": "1553130909270671401",
   "guildId": "1323913838143209622",
   "pollSeconds": 3,
-  "dropAlerts": true
+  "dropAlerts": true,
+  "relayOwnGuildMessages": true
 }
 ```
 
@@ -128,6 +129,9 @@ These are client commands. They stay on your computer and are not sent to Hypixe
 | `/guildbridge drops` | Shows whether drop alerts are on |
 | `/guildbridge drops on` | Posts SkyBlock loot embeds to Discord |
 | `/guildbridge drops off` | Stops drop embeds (guild chat relay unchanged) |
+| `/guildbridge relay` | Shows whether guild relay is `own` or `all` |
+| `/guildbridge relay own` | Post only your guild lines (multiple mod users) |
+| `/guildbridge relay all` | Post every guild line you see (single bridge client) |
 
 ## Build
 

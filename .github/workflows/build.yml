@@ -85,9 +85,9 @@ jobs:
             echo "Download the jar that matches your Minecraft version, plus Fabric Loader and Fabric API for that version."
             echo
             echo "### Changes"
-            echo "- SkyBlock drop alerts as Discord embeds (RARE DROP, dungeon party loot, pets, fishing, and more)"
-            echo "- Fix duplicate guild chat posts to Discord"
-            echo "- \`/guildbridge drops on|off\` to toggle drop alerts"
+            echo "- Default \`relay own\`: each client posts only its own guild lines (fixes duplicate Discord posts when several members run the mod)"
+            echo "- \`/guildbridge relay all|own\` for single-bridge vs multi-member setups"
+            echo "- SkyBlock drop alerts as Discord embeds; \`/guildbridge drops on|off\`"
             echo
             echo "| Minecraft | Jar |"
             echo "| --- | --- |"

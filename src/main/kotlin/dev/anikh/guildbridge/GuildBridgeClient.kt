@@ -62,6 +62,22 @@ object GuildBridgeClient : ClientModInitializer {
                     .then(ClientCommands.literal("on").executes { setEnabled(it.source, true) })
                     .then(ClientCommands.literal("off").executes { setEnabled(it.source, false) })
                     .then(
+                        ClientCommands.literal("relay")
+                            .executes { context ->
+                                val mode = if (BridgeRuntime.config.relayOwnGuildMessages) {
+                                    "own (each player posts only their lines; use when multiple members run the mod)"
+                                } else {
+                                    "all (posts every guild line you see; use when only one member runs the mod)"
+                                }
+                                context.source.sendFeedback(
+                                    Component.literal("Guild relay is $mode. Use /guildbridge relay all or own."),
+                                )
+                                1
+                            }
+                            .then(ClientCommands.literal("all").executes { setGuildRelay(it.source, false) })
+                            .then(ClientCommands.literal("own").executes { setGuildRelay(it.source, true) }),
+                    )
+                    .then(
                         ClientCommands.literal("drops")
                             .executes { context ->
                                 val state = if (BridgeRuntime.config.dropAlerts) "on" else "off"
@@ -133,6 +149,10 @@ object GuildBridgeClient : ClientModInitializer {
             return
         }
         val line = GuildChat.parse(text) ?: return
+        val localPlayer = Minecraft.getInstance().user.name
+        if (!GuildChat.shouldRelayToDiscord(line, localPlayer, BridgeRuntime.config.relayOwnGuildMessages)) {
+            return
+        }
         val key = line.username + "\u0000" + line.message
         val now = System.currentTimeMillis()
         synchronized(this) {
@@ -190,6 +210,18 @@ object GuildBridgeClient : ClientModInitializer {
         return 1
     }
 
+    private fun setGuildRelay(source: FabricClientCommandSource, ownOnly: Boolean): Int {
+        BridgeRuntime.config.relayOwnGuildMessages = ownOnly
+        BridgeConfig.save(BridgeRuntime.configPath, BridgeRuntime.config)
+        val message = if (ownOnly) {
+            "Guild relay set to own messages only (recommended when multiple guild members use the mod)."
+        } else {
+            "Guild relay set to all guild chat you see (use only on one bridge client)."
+        }
+        source.sendFeedback(Component.literal(message))
+        return 1
+    }
+
     private fun setDropAlerts(source: FabricClientCommandSource, value: Boolean): Int {
         BridgeRuntime.config.dropAlerts = value
         BridgeConfig.save(BridgeRuntime.configPath, BridgeRuntime.config)
@@ -219,6 +251,7 @@ object GuildBridgeClient : ClientModInitializer {
         }
         val relay = if (BridgeRuntime.enabled) "on" else "off"
         val drops = if (config.dropAlerts) "on" else "off"
-        return Component.literal("Guild Bridge is $relay. Drop alerts are $drops. $outbound. $inbox")
+        val guildRelay = if (config.relayOwnGuildMessages) "own" else "all"
+        return Component.literal("Guild Bridge is $relay. Guild relay is $guildRelay. Drop alerts are $drops. $outbound. $inbox")
     }
 }

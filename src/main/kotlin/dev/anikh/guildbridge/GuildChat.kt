@@ -37,6 +37,14 @@ object GuildChat {
         return GuildLine(username, message)
     }
 
+    /** When several guild members run the mod, only the sender should post (author matches this client). */
+    fun shouldRelayToDiscord(line: GuildLine, localPlayer: String, relayOwnMessagesOnly: Boolean): Boolean {
+        if (!relayOwnMessagesOnly) {
+            return true
+        }
+        return line.username.equals(localPlayer, ignoreCase = true)
+    }
+
     fun forDiscord(text: String): String {
         val cleaned = text
             .replace(userMention, "@user")

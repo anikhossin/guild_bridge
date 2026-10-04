@@ -1,6 +1,7 @@
 package dev.anikh.guildbridge
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -39,6 +40,14 @@ class GuildChatTest {
         assertNull(GuildChat.parse("Party > [MVP+] Steve: hi"))
         assertNull(GuildChat.parse("Guild > The guild is muted."))
         assertNull(GuildChat.parse("[Discord] Steve: hi"))
+    }
+
+    @Test
+    fun relayOwnModeSkipsOtherPlayersGuildLines() {
+        val line = GuildLine("Steve", "hi")
+        assertTrue(GuildChat.shouldRelayToDiscord(line, "Steve", relayOwnMessagesOnly = true))
+        assertFalse(GuildChat.shouldRelayToDiscord(line, "Alex", relayOwnMessagesOnly = true))
+        assertTrue(GuildChat.shouldRelayToDiscord(line, "Alex", relayOwnMessagesOnly = false))
     }
 
     @Test
