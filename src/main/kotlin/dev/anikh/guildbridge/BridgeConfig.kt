@@ -1,6 +1,7 @@
 package dev.anikh.guildbridge
 
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonParser
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
@@ -40,8 +41,26 @@ class BridgeConfig {
                 save(path, created)
                 return created
             }
+            val text = path.readText()
             return try {
-                gson.fromJson(path.readText(), BridgeConfig::class.java)?.sanitized() ?: BridgeConfig().sanitized()
+                val config = gson.fromJson(text, BridgeConfig::class.java) ?: BridgeConfig()
+                var migrated = false
+                val root = runCatching { JsonParser.parseString(text).asJsonObject }.getOrNull()
+                if (root != null) {
+                    if (!root.has("relayOwnGuildMessages")) {
+                        config.relayOwnGuildMessages = true
+                        migrated = true
+                    }
+                    if (!root.has("dropAlerts")) {
+                        config.dropAlerts = true
+                        migrated = true
+                    }
+                }
+                val sanitized = config.sanitized()
+                if (migrated) {
+                    save(path, sanitized)
+                }
+                sanitized
             } catch (_: Exception) {
                 BridgeConfig().sanitized()
             }

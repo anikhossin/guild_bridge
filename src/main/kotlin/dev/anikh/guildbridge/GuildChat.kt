@@ -10,16 +10,18 @@ data class GuildLine(
 
 object GuildChat {
     private val nameToken = Regex("^[A-Za-z0-9_]{3,16}$")
+
+    fun plain(raw: String): String =
+        raw.replace(Regex("§."), "")
+            .replace('\u00A0', ' ')
+            .replace(Regex("\\s+"), " ")
+            .trim()
     private val userMention = Regex("<@!?\\d+>")
     private val roleMention = Regex("<@&\\d+>")
     private val channelMention = Regex("<#\\d+>")
 
     fun parse(line: String): GuildLine? {
-        val plain = line
-            .replace(Regex("§."), "")
-            .replace('\u00A0', ' ')
-            .replace(Regex("\\s+"), " ")
-            .trim()
+        val plain = plain(line)
         val marker = listOf("Guild > ", "[Guild] ").firstOrNull { plain.contains(it) } ?: return null
         val body = plain.substring(plain.indexOf(marker) + marker.length)
         val separator = body.indexOf(": ")

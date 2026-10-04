@@ -89,4 +89,27 @@ class GuildChatTest {
         assertEquals("", loaded.webhookUrl)
         assertEquals("abc", loaded.botToken)
     }
+
+    @Test
+    fun recentOutboundStoreBlocksDuplicateGuildLines() {
+        val line = GuildLine("Steve", "hi")
+        val plainA = "Guild > Steve: hi"
+        val plainB = "§2Guild > §bSteve§f: §7hi"
+        assertTrue(RecentOutboundStore.trySendGuild(line, plainA))
+        assertFalse(RecentOutboundStore.trySendGuild(line, plainB))
+        assertFalse(RecentOutboundStore.trySendGuild(GuildLine("STEVE", "hi"), null))
+    }
+
+    @Test
+    fun olderConfigDefaultsRelayOwnGuildMessages() {
+        val path = java.nio.file.Files.createTempDirectory("guildbridge").resolve("guildbridge.json")
+        path.writeText(
+            """
+            {"enabled":true,"webhookUrl":"https://discord.com/api/webhooks/123456789012345678/abcDEF_123-token","pollSeconds":3}
+            """.trimIndent(),
+        )
+        val loaded = BridgeConfig.load(path)
+        assertTrue(loaded.relayOwnGuildMessages)
+        assertTrue(loaded.dropAlerts)
+    }
 }

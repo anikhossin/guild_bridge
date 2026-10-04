@@ -85,9 +85,10 @@ jobs:
             echo "Download the jar that matches your Minecraft version, plus Fabric Loader and Fabric API for that version."
             echo
             echo "### Changes"
-            echo "- Default \`relay own\`: each client posts only its own guild lines (fixes duplicate Discord posts when several members run the mod)"
-            echo "- \`/guildbridge relay all|own\` for single-bridge vs multi-member setups"
-            echo "- SkyBlock drop alerts as Discord embeds; \`/guildbridge drops on|off\`"
+            echo "- **Duplicate guild posts:** per-client outbound dedupe (\`RecentOutboundStore\`); config migration so missing \`relayOwnGuildMessages\` defaults to **own** (not relay all)"
+            echo "- **Multi-member setups:** everyone on this release should use \`/guildbridge relay own\`; old jars with \`relay all\` still double-post to the same webhook"
+            echo "- **Drop alerts:** dungeon and Kuudra chest loot only (no slayer/pets/fishing/Diana \`RARE DROP!\`)"
+            echo "- \`/guildbridge\` status shows mod version"
             echo
             echo "| Minecraft | Jar |"
             echo "| --- | --- |"

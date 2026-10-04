@@ -10,7 +10,7 @@ One player runs the mod. Guild chat is posted to Discord under that player's nam
 
 **Discord to Hypixel.** A message in the guild channel appears only for you as `[Guild Bridge] username -> message`, in gold, aqua, and yellow so it does not look like normal chat. It is not sent with `/gc`. Webhook posts are skipped, so guild chat does not bounce back into the game.
 
-**Drop alerts (1.3).** When Hypixel prints loot in your chat (for example `RARE DROP!`, party `has obtained`, dungeon chest pickups, pets, fishing catches, Diana/Kuudra-tagged lines), the mod posts a colored Discord embed to the same webhook. Only chat your client receives is detected (your drops and party lines you see). Toggle with `/guildbridge drops on` or `off`.
+**Drop alerts.** When Hypixel prints dungeon loot or Kuudra chest loot in your chat (party `has obtained`, dungeon chest pickups, Kuudra `received … from` / hoard chest lines), the mod posts a colored Discord embed to the same webhook. Slayer, pets, fishing, Diana, and other `RARE DROP!` lines are ignored. Toggle with `/guildbridge drops on` or `off`.
 
 The webhook is not in the jar. Save it once with `/guildbridge webhook`. That URL is stored in `config/guildbridge.json` and used for every guild message on that Minecraft instance. A webhook can only send, so reading Discord still needs a bot token. Save that with `/guildbridge token`.
 
@@ -33,10 +33,10 @@ A push to `main` builds a separate jar for each version and publishes them on th
 
 | Minecraft | Jar | Fabric API used to build |
 | --- | --- | --- |
-| 26.1 | `guild-bridge-1.3.1-mc26.1.jar` | 0.145.1+26.1 |
-| 26.1.1 | `guild-bridge-1.3.1-mc26.1.1.jar` | 0.145.4+26.1.1 |
-| 26.1.2 | `guild-bridge-1.3.1-mc26.1.2.jar` | 0.155.3+26.1.2 |
-| 26.2 | `guild-bridge-1.3.1-mc26.2.jar` | 0.161.0+26.2 |
+| 26.1 | `guild-bridge-1.3.2-mc26.1.jar` | 0.145.1+26.1 |
+| 26.1.1 | `guild-bridge-1.3.2-mc26.1.1.jar` | 0.145.4+26.1.1 |
+| 26.1.2 | `guild-bridge-1.3.2-mc26.1.2.jar` | 0.155.3+26.1.2 |
+| 26.2 | `guild-bridge-1.3.2-mc26.2.jar` | 0.161.0+26.2 |
 
 Each jar only loads on the Minecraft version in its name. Kotlin is packed inside the jar, so you do not install Fabric Language Kotlin separately.
 
@@ -127,7 +127,7 @@ These are client commands. They stay on your computer and are not sent to Hypixe
 | `/guildbridge token` | Says whether a bot token is saved, without showing it |
 | `/guildbridge token <token>` | Saves the Discord bot token and starts reading the guild channel |
 | `/guildbridge drops` | Shows whether drop alerts are on |
-| `/guildbridge drops on` | Posts SkyBlock loot embeds to Discord |
+| `/guildbridge drops on` | Posts dungeon and Kuudra chest embeds to Discord |
 | `/guildbridge drops off` | Stops drop embeds (guild chat relay unchanged) |
 | `/guildbridge relay` | Shows whether guild relay is `own` or `all` |
 | `/guildbridge relay own` | Post only your guild lines (multiple mod users) |

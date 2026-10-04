@@ -8,13 +8,8 @@ enum class DropCategory(
     val emoji: String,
     val color: Int,
 ) {
-    SLAYER("Slayer RNG", "☠", 0xE74C3C),
     DUNGEON("Dungeon", "⚔", 0x9B59B6),
-    KUUDRA("Kuudra", "🔥", 0xE67E22),
-    DIANA("Diana", "🌙", 0xF1C40F),
-    PET("Pet Drop", "🐾", 0xE91E63),
-    FISHING("Fishing", "🎣", 0x3498DB),
-    RARE("Rare Drop", "✦", 0x2ECC71),
+    KUUDRA("Kuudra chest", "🔥", 0xE67E22),
 }
 
 data class DropAlert(
@@ -68,14 +63,6 @@ data class DropAlert(
     companion object {
         private val rankPrefix = Regex("^(?:\\[[^\\]]+\\] )+")
 
-        private val rareDrop = Regex("""^RARE DROP! (.+?)(?: \((\+[^)]+)\))?[!.]?\s*$""", RegexOption.IGNORE_CASE)
-        private val petDrop = Regex("""^PET DROP! (.+?)(?: \(.+\))?[!.]?\s*$""", RegexOption.IGNORE_CASE)
-        private val extraStats = Regex("""^EXTRA STATS DROP! (.+?)[!.]?\s*$""", RegexOption.IGNORE_CASE)
-        private val secretBonus = Regex("""^SECRET BONUS! (.+?)[!.]?\s*$""", RegexOption.IGNORE_CASE)
-        private val fishingCatch = Regex(
-            """^(?:GOOD|GREAT|OUTSTANDING) CATCH! You caught (.+?)!?\.?\s*$""",
-            RegexOption.IGNORE_CASE,
-        )
         private val obtained = Regex(
             """^(?:\[[^\]]+] )*([A-Za-z0-9_]{3,16}) has obtained (.+?)[!.]?\s*$""",
             RegexOption.IGNORE_CASE,
@@ -90,22 +77,7 @@ data class DropAlert(
             RegexOption.IGNORE_CASE,
         )
 
-        private val dianaHints = listOf(
-            "nucleus",
-            "burrow",
-            "griffin",
-            "chimera",
-            "shard",
-            "minos",
-            "anubis",
-            "antique",
-            "treasure",
-            "shen",
-            "daedalus",
-            "mythos",
-            "diana",
-        )
-        private val kuudraHints = listOf("kuudra", "hoard", "hellstorm", "crimson", "kuurth", "attribute shard")
+        private val kuudraChestHints = listOf("kuudra", "hoard", "hellstorm", "crimson", "kuurth")
 
         fun plainChat(raw: String): String =
             raw.replace(Regex("§."), "")
@@ -119,30 +91,26 @@ data class DropAlert(
                 return null
             }
 
-            petDrop.matchEntire(plain)?.let { match ->
-                return DropAlert(
-                    category = DropCategory.PET,
-                    player = localPlayer.ifBlank { "You" },
-                    item = cleanItem(match.groupValues[1]),
-                    sourceLine = plain,
-                )
-            }
-
-            fishingCatch.matchEntire(plain)?.let { match ->
-                return DropAlert(
-                    category = DropCategory.FISHING,
-                    player = localPlayer.ifBlank { "You" },
-                    item = cleanItem(match.groupValues[1]),
-                    sourceLine = plain,
-                )
-            }
-
             kuudraShare.matchEntire(plain)?.let { match ->
                 val player = match.groupValues[1]
                 val item = cleanItem(match.groupValues[2])
                 val chest = cleanItem(match.groupValues[3])
                 return DropAlert(
                     category = DropCategory.KUUDRA,
+                    player = player,
+                    item = item,
+                    detail = "From $chest",
+                    sourceLine = plain,
+                )
+            }
+
+            chestPickup.matchEntire(plain)?.let { match ->
+                val player = match.groupValues[1]
+                val item = cleanItem(match.groupValues[2])
+                val chest = cleanItem(match.groupValues[3])
+                val category = if (isKuudraChest(chest)) DropCategory.KUUDRA else DropCategory.DUNGEON
+                return DropAlert(
+                    category = category,
                     player = player,
                     item = item,
                     detail = "From $chest",
@@ -161,57 +129,11 @@ data class DropAlert(
                 )
             }
 
-            chestPickup.matchEntire(plain)?.let { match ->
-                val player = match.groupValues[1]
-                val item = cleanItem(match.groupValues[2])
-                val chest = cleanItem(match.groupValues[3])
-                return DropAlert(
-                    category = DropCategory.DUNGEON,
-                    player = player,
-                    item = item,
-                    detail = "From $chest",
-                    sourceLine = plain,
-                )
-            }
-
             youPickedUp.matchEntire(plain)?.let { match ->
                 return DropAlert(
                     category = DropCategory.DUNGEON,
                     player = localPlayer.ifBlank { "You" },
                     item = cleanItem(match.groupValues[1]),
-                    sourceLine = plain,
-                )
-            }
-
-            secretBonus.matchEntire(plain)?.let { match ->
-                return DropAlert(
-                    category = DropCategory.DUNGEON,
-                    player = localPlayer.ifBlank { "You" },
-                    item = cleanItem(match.groupValues[1]),
-                    detail = "Secret bonus",
-                    sourceLine = plain,
-                )
-            }
-
-            extraStats.matchEntire(plain)?.let { match ->
-                return DropAlert(
-                    category = DropCategory.DUNGEON,
-                    player = localPlayer.ifBlank { "You" },
-                    item = cleanItem(match.groupValues[1]),
-                    detail = "Extra stats",
-                    sourceLine = plain,
-                )
-            }
-
-            rareDrop.matchEntire(plain)?.let { match ->
-                val item = cleanItem(match.groupValues[1])
-                val detail = match.groupValues.getOrNull(2)?.trim().orEmpty()
-                val category = categorizeRare(item, plain)
-                return DropAlert(
-                    category = category,
-                    player = localPlayer.ifBlank { "You" },
-                    item = item,
-                    detail = detail,
                     sourceLine = plain,
                 )
             }
@@ -222,15 +144,9 @@ data class DropAlert(
         private fun cleanItem(raw: String): String =
             raw.trim().trimEnd('!', '.').replace(rankPrefix, "").trim()
 
-        private fun categorizeRare(item: String, plain: String): DropCategory {
-            val blob = "${item.lowercase()} ${plain.lowercase()}"
-            if (dianaHints.any { blob.contains(it) }) {
-                return DropCategory.DIANA
-            }
-            if (kuudraHints.any { blob.contains(it) }) {
-                return DropCategory.KUUDRA
-            }
-            return DropCategory.RARE
+        private fun isKuudraChest(chest: String): Boolean {
+            val lower = chest.lowercase()
+            return kuudraChestHints.any { lower.contains(it) }
         }
     }
 }

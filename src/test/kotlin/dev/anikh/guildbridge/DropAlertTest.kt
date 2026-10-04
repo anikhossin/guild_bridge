@@ -8,13 +8,13 @@ import org.junit.jupiter.api.Test
 
 class DropAlertTest {
     @Test
-    fun parsesSlayerRareDrop() {
-        val alert = DropAlert.parse("§6§lRARE DROP! §r§9Scylla Blade §r§b(+§r§b208% §r§b✯ Magic Find§r§b)", "Steve")
-        assertNotNull(alert)
-        assertEquals(DropCategory.RARE, alert!!.category)
-        assertEquals("Steve", alert.player)
-        assertEquals("Scylla Blade", alert.item)
-        assertTrue(alert.detail.contains("208"))
+    fun ignoresSlayerRareDrop() {
+        assertNull(
+            DropAlert.parse(
+                "§6§lRARE DROP! §r§9Scylla Blade §r§b(+§r§b208% §r§b✯ Magic Find§r§b)",
+                "Steve",
+            ),
+        )
     }
 
     @Test
@@ -27,18 +27,13 @@ class DropAlertTest {
     }
 
     @Test
-    fun parsesPetDrop() {
-        val alert = DropAlert.parse("§6§lPET DROP! §r§5Baby Yeti", "Steve")
-        assertNotNull(alert)
-        assertEquals(DropCategory.PET, alert!!.category)
-        assertEquals("Baby Yeti", alert.item)
+    fun ignoresPetDrop() {
+        assertNull(DropAlert.parse("§6§lPET DROP! §r§5Baby Yeti", "Steve"))
     }
 
     @Test
-    fun categorizesDianaNucleus() {
-        val alert = DropAlert.parse("§6§lRARE DROP! §r§5Overgrown Nucleus", "Steve")
-        assertNotNull(alert)
-        assertEquals(DropCategory.DIANA, alert!!.category)
+    fun ignoresDianaNucleusRareDrop() {
+        assertNull(DropAlert.parse("§6§lRARE DROP! §r§5Overgrown Nucleus", "Steve"))
     }
 
     @Test
@@ -47,6 +42,14 @@ class DropAlertTest {
         assertNotNull(alert)
         assertEquals(DropCategory.KUUDRA, alert!!.category)
         assertEquals("Alex", alert.player)
+    }
+
+    @Test
+    fun parsesDungeonChestPickup() {
+        val alert = DropAlert.parse("Steve picked up Necron's Handle from Gold Chest!", "Steve")
+        assertNotNull(alert)
+        assertEquals(DropCategory.DUNGEON, alert!!.category)
+        assertEquals("From Gold Chest", alert.detail)
     }
 
     @Test

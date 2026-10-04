@@ -3,7 +3,7 @@
   "id": "guildbridge",
   "version": "${version}",
   "name": "Guild Bridge",
-  "description": "Hypixel guild chat and SkyBlock drop alerts to Discord (embeds), plus Discord replies in local chat.",
+  "description": "Hypixel guild chat, dungeon and Kuudra chest drop alerts to Discord, plus Discord replies in local chat.",
   "authors": [
     "asbron"
   ],

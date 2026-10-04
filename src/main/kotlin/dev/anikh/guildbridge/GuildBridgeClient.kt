@@ -21,8 +21,6 @@ object BridgeRuntime {
 object GuildBridgeClient : ClientModInitializer {
     private val logger = LogUtils.getLogger()
     private var seenWorld = false
-    private var lastRelayKey = ""
-    private var lastRelayAt = 0L
     private var lastDropKey = ""
     private var lastDropAt = 0L
 
@@ -82,7 +80,9 @@ object GuildBridgeClient : ClientModInitializer {
                             .executes { context ->
                                 val state = if (BridgeRuntime.config.dropAlerts) "on" else "off"
                                 context.source.sendFeedback(
-                                    Component.literal("Drop alerts are $state. Use /guildbridge drops on or off."),
+                                    Component.literal(
+                                        "Dungeon and Kuudra chest drop alerts are $state. Use /guildbridge drops on or off.",
+                                    ),
                                 )
                                 1
                             }
@@ -148,21 +148,21 @@ object GuildBridgeClient : ClientModInitializer {
         if (!BridgeRuntime.enabled) {
             return
         }
+        val plain = GuildChat.plain(text)
+        if (!plain.contains("Guild > ") && !plain.contains("[Guild] ")) {
+            return
+        }
         val line = GuildChat.parse(text) ?: return
-        val localPlayer = Minecraft.getInstance().user.name
+        val localPlayer = localPlayerName()
         if (!GuildChat.shouldRelayToDiscord(line, localPlayer, BridgeRuntime.config.relayOwnGuildMessages)) {
             return
         }
-        val key = line.username + "\u0000" + line.message
-        val now = System.currentTimeMillis()
-        synchronized(this) {
-            if (key == lastRelayKey && now - lastRelayAt < 3_000L) {
-                return
-            }
-            lastRelayKey = key
-            lastRelayAt = now
-        }
-        WebhookPoster.enqueue(line)
+        WebhookPoster.enqueue(line, plain)
+    }
+
+    private fun localPlayerName(): String {
+        val client = Minecraft.getInstance()
+        return client.player?.gameProfile?.name ?: client.user.name
     }
 
     private fun relayDropLine(text: String) {
@@ -225,7 +225,15 @@ object GuildBridgeClient : ClientModInitializer {
     private fun setDropAlerts(source: FabricClientCommandSource, value: Boolean): Int {
         BridgeRuntime.config.dropAlerts = value
         BridgeConfig.save(BridgeRuntime.configPath, BridgeRuntime.config)
-        source.sendFeedback(Component.literal(if (value) "Drop alerts on." else "Drop alerts off."))
+        source.sendFeedback(
+            Component.literal(
+                if (value) {
+                    "Dungeon and Kuudra chest drop alerts on."
+                } else {
+                    "Dungeon and Kuudra chest drop alerts off."
+                },
+            ),
+        )
         return 1
     }
 
@@ -252,6 +260,13 @@ object GuildBridgeClient : ClientModInitializer {
         val relay = if (BridgeRuntime.enabled) "on" else "off"
         val drops = if (config.dropAlerts) "on" else "off"
         val guildRelay = if (config.relayOwnGuildMessages) "own" else "all"
-        return Component.literal("Guild Bridge is $relay. Guild relay is $guildRelay. Drop alerts are $drops. $outbound. $inbox")
+        return Component.literal(
+            "Guild Bridge ${modVersion()} is $relay. Guild relay is $guildRelay. Drop alerts are $drops. $outbound. $inbox",
+        )
     }
+
+    private fun modVersion(): String =
+        FabricLoader.getInstance().getModContainer("guildbridge")
+            .map { it.metadata.version.friendlyString }
+            .orElse("?")
 }

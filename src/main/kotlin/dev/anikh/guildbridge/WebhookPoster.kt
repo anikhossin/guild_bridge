@@ -13,8 +13,6 @@ object WebhookPoster {
     private val logger = LogUtils.getLogger()
     private val queue = LinkedBlockingQueue<GuildLine>(100)
     private val http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build()
-    private var lastKey = ""
-    private var lastAt = 0L
     private var missingWarned = false
 
     fun start() {
@@ -41,7 +39,7 @@ object WebhookPoster {
         missingWarned = false
     }
 
-    fun enqueue(line: GuildLine) {
+    fun enqueue(line: GuildLine, rawPlain: String? = null) {
         if (!BridgeRuntime.enabled) {
             return
         }
@@ -52,14 +50,8 @@ object WebhookPoster {
             }
             return
         }
-        val key = line.username + "\u0000" + line.message
-        val now = System.currentTimeMillis()
-        synchronized(this) {
-            if (key == lastKey && now - lastAt < 3_000) {
-                return
-            }
-            lastKey = key
-            lastAt = now
+        if (!RecentOutboundStore.trySendGuild(line, rawPlain)) {
+            return
         }
         if (!queue.offer(line)) {
             logger.warn("Guild Bridge dropped a guild line because the Discord queue is full")
