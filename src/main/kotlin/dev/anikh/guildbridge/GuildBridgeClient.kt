@@ -20,19 +20,20 @@ object BridgeRuntime {
 object GuildBridgeClient : ClientModInitializer {
     private val logger = LogUtils.getLogger()
     private var seenWorld = false
+    private var lastRelayKey = ""
+    private var lastRelayAt = 0L
 
     override fun onInitializeClient() {
         BridgeRuntime.configPath = FabricLoader.getInstance().configDir.resolve("guildbridge.json")
         BridgeRuntime.config = BridgeConfig.load(BridgeRuntime.configPath)
         BridgeRuntime.enabled = BridgeRuntime.config.enabled
 
+        // Hypixel guild chat is a server/game message. Only listen on GAME; CHAT also fires for
+        // some routed messages and would post the same line to Discord twice.
         ClientReceiveMessageEvents.GAME.register { message, overlay ->
             if (overlay) {
                 return@register
             }
-            relayGuildLine(message.string)
-        }
-        ClientReceiveMessageEvents.CHAT.register { message, _, _, _, _ ->
             relayGuildLine(message.string)
         }
 
@@ -114,6 +115,15 @@ object GuildBridgeClient : ClientModInitializer {
             return
         }
         val line = GuildChat.parse(text) ?: return
+        val key = line.username + "\u0000" + line.message
+        val now = System.currentTimeMillis()
+        synchronized(this) {
+            if (key == lastRelayKey && now - lastRelayAt < 3_000L) {
+                return
+            }
+            lastRelayKey = key
+            lastRelayAt = now
+        }
         WebhookPoster.enqueue(line)
     }
 
