@@ -87,12 +87,12 @@ object DiscordInbox {
             val fresh = fetch(token, config.channelId, after = lastId)
                 .sortedBy { it.id.toULongOrNull() ?: 0uL }
             warnIfContentHidden(fresh)
-            for (message in fresh) {
-                lastId = message.id
-                if (message.webhookId != null || message.text.isEmpty()) {
+            for ((id, author, text, webhookId) in fresh) {
+                lastId = id
+                if (webhookId != null || text.isEmpty()) {
                     continue
                 }
-                GuildSender.enqueue(message.author, message.text)
+                GuildSender.enqueue(author, text)
             }
         }
         Thread.sleep(config.pollSeconds * 1000L)

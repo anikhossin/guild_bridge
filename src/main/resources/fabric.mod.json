@@ -3,7 +3,7 @@
   "id": "guildbridge",
   "version": "${version}",
   "name": "Guild Bridge",
-  "description": "Sends Hypixel guild chat to Discord with each player's name and skin head, and shows Discord replies in your local chat.",
+  "description": "Hypixel guild chat and SkyBlock drop alerts to Discord (embeds), plus Discord replies in local chat.",
   "authors": [
     "asbron"
   ],

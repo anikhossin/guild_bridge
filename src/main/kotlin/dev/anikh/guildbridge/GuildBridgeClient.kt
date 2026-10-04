@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents
 import com.mojang.brigadier.arguments.StringArgumentType
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 import net.fabricmc.loader.api.FabricLoader
+import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.Component
 
 object BridgeRuntime {
@@ -22,6 +23,8 @@ object GuildBridgeClient : ClientModInitializer {
     private var seenWorld = false
     private var lastRelayKey = ""
     private var lastRelayAt = 0L
+    private var lastDropKey = ""
+    private var lastDropAt = 0L
 
     override fun onInitializeClient() {
         BridgeRuntime.configPath = FabricLoader.getInstance().configDir.resolve("guildbridge.json")
@@ -34,7 +37,9 @@ object GuildBridgeClient : ClientModInitializer {
             if (overlay) {
                 return@register
             }
-            relayGuildLine(message.string)
+            val text = message.string
+            relayGuildLine(text)
+            relayDropLine(text)
         }
 
         ClientTickEvents.END_CLIENT_TICK.register { client ->
@@ -56,6 +61,18 @@ object GuildBridgeClient : ClientModInitializer {
                     }
                     .then(ClientCommands.literal("on").executes { setEnabled(it.source, true) })
                     .then(ClientCommands.literal("off").executes { setEnabled(it.source, false) })
+                    .then(
+                        ClientCommands.literal("drops")
+                            .executes { context ->
+                                val state = if (BridgeRuntime.config.dropAlerts) "on" else "off"
+                                context.source.sendFeedback(
+                                    Component.literal("Drop alerts are $state. Use /guildbridge drops on or off."),
+                                )
+                                1
+                            }
+                            .then(ClientCommands.literal("on").executes { setDropAlerts(it.source, true) })
+                            .then(ClientCommands.literal("off").executes { setDropAlerts(it.source, false) }),
+                    )
                     .then(
                         ClientCommands.literal("reload").executes { context ->
                             BridgeRuntime.config = BridgeConfig.load(BridgeRuntime.configPath)
@@ -105,6 +122,7 @@ object GuildBridgeClient : ClientModInitializer {
         }
 
         WebhookPoster.start()
+        DropPoster.start()
         DiscordInbox.start()
         GuildSender.start()
         logger.info("Guild Bridge ready for guild chat relay")
@@ -125,6 +143,24 @@ object GuildBridgeClient : ClientModInitializer {
             lastRelayAt = now
         }
         WebhookPoster.enqueue(line)
+    }
+
+    private fun relayDropLine(text: String) {
+        if (!BridgeRuntime.enabled || !BridgeRuntime.config.dropAlerts) {
+            return
+        }
+        val localPlayer = Minecraft.getInstance().user.name
+        val alert = DropAlert.parse(text, localPlayer) ?: return
+        val key = alert.dedupKey()
+        val now = System.currentTimeMillis()
+        synchronized(this) {
+            if (key == lastDropKey && now - lastDropAt < 3_000L) {
+                return
+            }
+            lastDropKey = key
+            lastDropAt = now
+        }
+        DropPoster.enqueue(alert)
     }
 
     private fun saveToken(source: FabricClientCommandSource, token: String): Int {
@@ -149,7 +185,15 @@ object GuildBridgeClient : ClientModInitializer {
         BridgeRuntime.config.webhookUrl = webhook
         BridgeConfig.save(BridgeRuntime.configPath, BridgeRuntime.config)
         WebhookPoster.noteConfigured()
+        DropPoster.noteConfigured()
         source.sendFeedback(Component.literal("Webhook saved. Guild chat will post to that Discord channel."))
+        return 1
+    }
+
+    private fun setDropAlerts(source: FabricClientCommandSource, value: Boolean): Int {
+        BridgeRuntime.config.dropAlerts = value
+        BridgeConfig.save(BridgeRuntime.configPath, BridgeRuntime.config)
+        source.sendFeedback(Component.literal(if (value) "Drop alerts on." else "Drop alerts off."))
         return 1
     }
 
@@ -174,6 +218,7 @@ object GuildBridgeClient : ClientModInitializer {
             "Discord to Hypixel shows private messages from channel ${config.channelId}"
         }
         val relay = if (BridgeRuntime.enabled) "on" else "off"
-        return Component.literal("Guild Bridge is $relay. $outbound. $inbox")
+        val drops = if (config.dropAlerts) "on" else "off"
+        return Component.literal("Guild Bridge is $relay. Drop alerts are $drops. $outbound. $inbox")
     }
 }

@@ -14,6 +14,7 @@ class BridgeConfig {
     @JvmField var channelId: String = BridgeSecrets.CHANNEL_ID
     @JvmField var guildId: String = BridgeSecrets.GUILD_ID
     @JvmField var pollSeconds: Int = 3
+    @JvmField var dropAlerts: Boolean = true
 
     fun sanitized(): BridgeConfig {
         enabled = enabled
@@ -22,6 +23,7 @@ class BridgeConfig {
         channelId = present(channelId).ifEmpty { BridgeSecrets.CHANNEL_ID }
         guildId = present(guildId).ifEmpty { BridgeSecrets.GUILD_ID }
         pollSeconds = pollSeconds.coerceIn(2, 30)
+        dropAlerts = dropAlerts
         return this
     }
 
