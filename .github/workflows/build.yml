@@ -9,6 +9,7 @@ jobs:
   build:
     name: Minecraft ${{ matrix.minecraft }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
     strategy:
@@ -42,11 +43,10 @@ jobs:
         run: |
           chmod +x gradlew
           echo "Building for Minecraft ${{ matrix.minecraft }} (Fabric API ${{ matrix.fabric_api }})."
-          echo "After 'Fabric Loom', Gradle may sit quiet for several minutes on a cold runner while it downloads Minecraft jars and rebuilds the Loom cache — especially for 26.2."
+          echo "After 'Fabric Loom', Gradle may sit quiet for several minutes on a cold runner while it downloads Minecraft jars and rebuilds the Loom cache (especially 26.2)."
           ./gradlew build --stacktrace --console=plain \
             -Pminecraft_version="${{ matrix.minecraft }}" \
             -Pfabric_api_version="${{ matrix.fabric_api }}"
-      timeout-minutes: 45
 
       - name: Upload mod jar
         uses: actions/upload-artifact@v4
